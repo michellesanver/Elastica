@@ -33,7 +33,7 @@ class Reindex
     {
         $this->client = $client;
     }
-    
+
     /**
      * Reindex one index from source to target
      *
@@ -49,7 +49,7 @@ class Reindex
         $sizePerShard = (isset($options['size_per_shard']) ? $options['size_per_shard'] : 1000);
         $indexSettings = (isset($options['index_settings']) ? $options['index_settings'] : null);
 
-        $this->setIndexSettings([$sourceIndex, $targetIndex], $indexSettings);
+        $this->setIndexSettings(array($sourceIndex, $targetIndex), $indexSettings);
 
         $search = new Search($this->client);
         $search->addIndex($sourceIndex);
