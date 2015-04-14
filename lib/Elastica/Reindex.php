@@ -8,6 +8,7 @@ use Elastica\Client;
 use Elastica\Index;
 use Elastica\Search;
 use Elastica\Exception\InvalidException;
+use Elastica\ResultSet;
 
 /**
  * Elastica reindex
@@ -46,24 +47,11 @@ class Reindex
      */
     public function reindex(Index $sourceIndex, Index $targetIndex, array $options = array())
     {
-        $expiryTime = "1m";
-        $sizePerShard = "1000";
-        $indexSettings = null;
+        $expiryTime = (isset($options['expiry_time']) ? $options['expiry_time'] : '1m');
+        $sizePerShard = (isset($options['size_per_shard']) ? $options['size_per_shard'] : 1000);
+        $indexSettings = (isset($options['index_settings']) ? $options['index_settings'] : null);
 
-        if (isset($options['index_settings'])) {
-            $indexSettings = $options['index_settings'];
-        }
-
-        if (isset($options['expiry_time'])) {
-            $expiryTime = $options['expiry_time'];
-        }
-
-        if (isset($options['size_per_shard'])) {
-            $expiryTime = $options['size_per_shard'];
-        }
-
-        $this->setIndexSettings($sourceIndex, $indexSettings);
-        $this->setIndexSettings($targetIndex, $indexSettings);
+        $this->setIndexSettings([$sourceIndex, $targetIndex], $indexSettings);
 
         $search = new Search($this->client);
         $search->addIndex($sourceIndex);
@@ -71,40 +59,55 @@ class Reindex
 
         foreach ($search->scanAndScroll($expiryTime, $sizePerShard) as $scrollId => $resultSet) {
             $results = $resultSet->getResults();
-            $documents = array();
-
-            foreach ($results as $result) {
-                $hit = $result->getHit();
-                $document = new Document($hit['_id'], $hit['_source'], $hit['_type'], $hit['_index']);
-                $documents[] = $document;
-            }
-
-            $targetIndex->addDocuments($documents);
-            $targetIndex->refresh();
+            $this->addDocumentsToIndex($results, $targetIndex);
         }
+    }
+
+    /**
+     * Add results to specified target index
+     *
+     * @param ResultSet $results     The results to add to the target
+     * @param Index     $targetIndex The target index we want to add the results to
+     *
+     * @return void
+     */
+    private function addDocumentsToIndex(ResultSet $results, Index $targetIndex)
+    {
+        $documents = array();
+
+        foreach ($results as $result) {
+            $hit = $result->getHit();
+            $document = new Document($hit['_id'], $hit['_source'], $hit['_type'], $hit['_index']);
+            $documents[] = $document;
+        }
+
+        $targetIndex->addDocuments($documents);
+        $targetIndex->refresh();
     }
 
     /**
      * Set the index settings, bulk indexing if not otherwise specified
      *
-     * @param Index      $index         The index to set the settings on
+     * @param array      $indexes       The indexes to set the settings on
      * @param null|array $indexSettings The settings to set
      *
      * @return void
      */
-    private function setIndexSettings(Index $index, $indexSettings = null)
+    private function setIndexSettings(array $indexes, $indexSettings = null)
     {
-        $bulkIndexSettings = array(
-            'index' => array(
-                'refresh_interval' => '-1',
-                'merge.policy.merge_factor' => 30
-            )
-        );
+        foreach ($indexes as $index) {
+            $bulkIndexSettings = array(
+                'index' => array(
+                    'refresh_interval' => '-1',
+                    'merge.policy.merge_factor' => 30
+                )
+            );
 
-        if (null == $indexSettings) {
-            $indexSettings = $bulkIndexSettings;
+            if (null == $indexSettings) {
+                $indexSettings = $bulkIndexSettings;
+            }
+
+            $index->setSettings($indexSettings);
         }
-
-        $index->setSettings($indexSettings);
     }
 }
