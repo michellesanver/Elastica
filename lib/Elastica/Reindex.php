@@ -33,8 +33,7 @@ class Reindex
     {
         $this->client = $client;
     }
-
-
+    
     /**
      * Reindex one index from source to target
      *
