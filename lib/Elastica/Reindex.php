@@ -92,15 +92,15 @@ class Reindex
      */
     private function setIndexSettings(array $indexes, $indexSettings = null)
     {
-        foreach ($indexes as $index) {
-            $bulkIndexSettings = array(
-                'index' => array(
-                    'refresh_interval' => '-1',
-                    'merge.policy.merge_factor' => 30
-                )
-            );
+        $bulkIndexSettings = array(
+            'index' => array(
+                'refresh_interval' => '-1',
+                'merge.policy.merge_factor' => 30
+            )
+        );
 
-            if (null == $indexSettings) {
+        foreach ($indexes as $index) {
+            if (null === $indexSettings) {
                 $indexSettings = $bulkIndexSettings;
             }
 
