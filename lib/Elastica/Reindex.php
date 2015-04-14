@@ -59,6 +59,8 @@ class Reindex
             $results = $resultSet->getResults();
             $this->addDocumentsToIndex($results, $targetIndex);
         }
+
+        $targetIndex->refresh();
     }
 
     /**
@@ -79,7 +81,6 @@ class Reindex
         }
 
         $targetIndex->addDocuments($documents);
-        $targetIndex->refresh();
     }
 
     /**
