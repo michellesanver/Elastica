@@ -100,11 +100,11 @@ class Reindex
             )
         );
 
+        if (null === $indexSettings) {
+            $indexSettings = $bulkIndexSettings;
+        }
+        
         foreach ($indexes as $index) {
-            if (null === $indexSettings) {
-                $indexSettings = $bulkIndexSettings;
-            }
-
             $index->setSettings($indexSettings);
         }
     }
