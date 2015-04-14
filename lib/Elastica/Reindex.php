@@ -24,7 +24,6 @@ class Reindex
      */
     private $client;
 
-
     /**
      * Constructor
      *
