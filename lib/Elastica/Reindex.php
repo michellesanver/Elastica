@@ -75,8 +75,7 @@ class Reindex
 
         foreach ($results as $result) {
             $hit = $result->getHit();
-            $document = new Document($hit['_id'], $hit['_source'], $hit['_type'], $hit['_index']);
-            $documents[] = $document;
+            $documents[] = new Document($hit['_id'], $hit['_source'], $hit['_type'], $hit['_index']);
         }
 
         $targetIndex->addDocuments($documents);
